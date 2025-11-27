@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ConnectionMessage } from "@humeai/voice-react"
 import { JsonMessage, ReturnChatEvent } from "hume/api/resources/empathicVoice"
 
-type Message = JsonMessage | ConnectionMessage | ReturnChatEvent
+// type Message = JsonMessage | ConnectionMessage | ReturnChatEvent
 
-export function condenseChatMessages(messages: Message[]) {
+export function condenseChatMessages(messages: any[]) {
   return messages.reduce((acc, message) => {
     const data = getChatEventData(message) ?? getJsonMessageData(message)
     if (data == null || data.content == null) {
@@ -26,7 +27,7 @@ export function condenseChatMessages(messages: Message[]) {
   }, [] as { isUser: boolean; content: string[] }[])
 }
 
-function getJsonMessageData(message: Message) {
+function getJsonMessageData(message: any) {
   if (message.type !== "user_message" && message.type !== "assistant_message") {
     return null
   }
@@ -37,7 +38,7 @@ function getJsonMessageData(message: Message) {
   }
 }
 
-function getChatEventData(message: Message) {
+function getChatEventData(message: any) {
   if (message.type !== "USER_MESSAGE" && message.type !== "AGENT_MESSAGE") {
     return null
   }

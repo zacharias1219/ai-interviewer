@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from "@/drizzle/db"
 import {
   JobInfoTable,
@@ -8,6 +9,7 @@ import { getJobInfoIdTag } from "@/features/jobInfos/dbCache"
 import { insertQuestion } from "@/features/questions/db"
 import { getQuestionJobInfoTag } from "@/features/questions/dbCache"
 import { canCreateQuestion } from "@/features/questions/permissions"
+import { aj } from "@/lib/arcjet"
 import { PLAN_LIMIT_MESSAGE } from "@/lib/errorToast"
 import { generateAiQuestion } from "@/services/ai/questions"
 import { getCurrentUser } from "@/services/clerk/lib/getCurrentUser"
@@ -22,6 +24,17 @@ const schema = z.object({
 })
 
 export async function POST(req: Request) {
+  const { userId } = await getCurrentUser()
+
+  if (userId == null) {
+    return new Response("You are not logged in", { status: 401 })
+  }
+
+  const decision = await aj.protect(req as any, { requested: 1, userId } as any)
+  if (decision.isDenied()) {
+    return new Response(null, { status: 403 })
+  }
+
   const body = await req.json()
   const result = schema.safeParse(body)
 
@@ -30,11 +43,6 @@ export async function POST(req: Request) {
   }
 
   const { prompt: difficulty, jobInfoId } = result.data
-  const { userId } = await getCurrentUser()
-
-  if (userId == null) {
-    return new Response("You are not logged in", { status: 401 })
-  }
 
   if (!(await canCreateQuestion())) {
     return new Response(PLAN_LIMIT_MESSAGE, { status: 403 })

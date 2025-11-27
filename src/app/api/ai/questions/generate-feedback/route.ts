@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from "@/drizzle/db"
 import { QuestionTable } from "@/drizzle/schema"
 import { getJobInfoIdTag } from "@/features/jobInfos/dbCache"
 import { getQuestionIdTag } from "@/features/questions/dbCache"
+import { aj } from "@/lib/arcjet"
 import { generateAiQuestionFeedback } from "@/services/ai/questions"
 import { getCurrentUser } from "@/services/clerk/lib/getCurrentUser"
 import { eq } from "drizzle-orm"
@@ -14,6 +16,17 @@ const schema = z.object({
 })
 
 export async function POST(req: Request) {
+  const { userId } = await getCurrentUser()
+
+  if (userId == null) {
+    return new Response("You are not logged in", { status: 401 })
+  }
+
+  const decision = await aj.protect(req as any, { requested: 1, userId } as any)
+  if (decision.isDenied()) {
+    return new Response(null, { status: 403 })
+  }
+
   const body = await req.json()
   const result = schema.safeParse(body)
 
@@ -22,11 +35,6 @@ export async function POST(req: Request) {
   }
 
   const { prompt: answer, questionId } = result.data
-  const { userId } = await getCurrentUser()
-
-  if (userId == null) {
-    return new Response("You are not logged in", { status: 401 })
-  }
 
   const question = await getQuestion(questionId, userId)
   if (question == null) {

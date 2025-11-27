@@ -1,6 +1,7 @@
 import { deleteUser, upsertUser } from "@/features/users/db"
 import { verifyWebhook } from "@clerk/nextjs/webhooks"
 import { NextRequest } from "next/server"
+// import { aj } from "@/lib/arcjet"
 
 export async function POST(request: NextRequest) {
   try {

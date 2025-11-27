@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from "@/drizzle/db"
 import { JobInfoTable } from "@/drizzle/schema"
 import { getJobInfoIdTag } from "@/features/jobInfos/dbCache"
 import { canRunResumeAnalysis } from "@/features/resumeAnalyses/permissions"
+import { aj } from "@/lib/arcjet"
 import { PLAN_LIMIT_MESSAGE } from "@/lib/errorToast"
 import { analyzeResumeForJob } from "@/services/ai/resumes/ai"
 import { getCurrentUser } from "@/services/clerk/lib/getCurrentUser"
@@ -13,6 +15,11 @@ export async function POST(req: Request) {
 
   if (userId == null) {
     return new Response("You are not logged in", { status: 401 })
+  }
+
+  const decision = await aj.protect(req as any, { requested: 1, userId } as any)
+  if (decision.isDenied()) {
+    return new Response(null, { status: 403 })
   }
 
   const formData = await req.formData()

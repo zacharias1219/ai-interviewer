@@ -24,15 +24,18 @@ const aj = arcjet({
 })
 
 export default clerkMiddleware(async (auth, req) => {
+  if (isPublicRoute(req)) {
+    return
+  }
+
+  // Only protect non-public routes with Arcjet
   const decision = await aj.protect(req)
 
   if (decision.isDenied()) {
     return new Response(null, { status: 403 })
   }
 
-  if (!isPublicRoute(req)) {
-    await auth.protect()
-  }
+  await auth.protect()
 })
 
 export const config = {
